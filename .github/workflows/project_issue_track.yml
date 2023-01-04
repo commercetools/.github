@@ -31,40 +31,40 @@ jobs:
           private_key: ${{ secrets.private_key }}
 
       # Get projectId
-      # query() -> organization() -> projectNext()
-      # https://docs.github.com/en/enterprise-cloud@latest/issues/trying-out-the-new-projects-experience/using-the-api-to-manage-projects#finding-the-node-id-of-an-organization-project
+      # query() -> organization() -> projectV2()
+      # https://docs.github.com/en/enterprise-cloud@latest/issues/planning-and-tracking-with-projects/automating-your-project/using-the-api-to-manage-projects#finding-the-node-id-of-an-organization-project
       - name: Get project data
         id: get_project_data
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
-          gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
+          gh api graphql -f query='
             query(
               $org_login: String!,
               $project_number: Int!
             ) {
               organization(login: $org_login) {
-                projectNext(number: $project_number) {
+                projectV2(number: $project_number) {
                   id
                 }
               }
             }' -f org_login=${{ inputs.organization }} -F project_number=${{ inputs.project_number }} > project_data.json
-          echo "::set-output name=project_id::$(jq '.data.organization.projectNext.id' project_data.json)"
+          echo "::set-output name=project_id::$(jq '.data.organization.projectV2.id' project_data.json)"
 
       # Create project item
-      # mutation() -> addProjectNextItem()
-      # https://docs.github.com/en/enterprise-cloud@latest/graphql/reference/mutations#addprojectnextitem
+      # mutation() -> addProjectV2ItemById()
+      # https://docs.github.com/en/graphql/reference/mutations#addprojectv2itembyid
       - name: Create project item
         env:
           GITHUB_TOKEN: ${{ steps.generate_token.outputs.token }}
         run: |
-          gh api graphql --header 'GraphQL-Features: projects_next_graphql' -f query='
+          gh api graphql -f query='
             mutation(
               $project_id: ID!,
               $content_id: ID!
             ) {
-              addProjectNextItem(input: {
+              addProjectV2ItemById(input: {
                 projectId: $project_id,
                 contentId: $content_id
-              }) { projectNextItem { id } }
+              }) { item { id } }
             }' -f project_id=${{ steps.get_project_data.outputs.project_id }} -f content_id=${{ github.event.issue.node_id }} > /dev/null
