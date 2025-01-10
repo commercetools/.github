@@ -1,4 +1,0 @@
-# https://help.github.com/en/github/creating-cloning-and-archiving-repositories/about-code-owners
-
-.github/workflows/project_issue_track.yml  @commercetools/special-delivery
-docs/project_issue_track.md                @commercetools/special-delivery
